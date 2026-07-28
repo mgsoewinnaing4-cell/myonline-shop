@@ -9,7 +9,9 @@ const PORT = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(__dirname));
-
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 // Memory Data (Database အစား ယာယီသိမ်းဆည်းရန်)
 let products = [
     { id: 1, name: "တီရှပ် (T-Shirt)", price: 15000 },

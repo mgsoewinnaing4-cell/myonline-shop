@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Online Shop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>My Online Shop</h1>
+        <a href="admin.html" class="admin-link">Admin Dashboard ဝင်ရန်</a>
+    </header>
+
+    <main>
+        <section class="products-section">
+            <h2>ရရှိနိုင်သော ပစ္စည်းများ</h2>
+            <div id="products-list" class="grid"></div>
+        </section>
+
+        <section class="cart-section">
+            <h2>ဈေးဝယ်တောင်း</h2>
+            <ul id="cart-items"><li class="empty-msg">ပစ္စည်း မရှိသေးပါ။</li></ul>
+            <hr>
+            <p class="total-text">စုစုပေါင်း - <strong id="total-price">0</strong> ကျပ်</p>
+
+            <div class="payment-info">
+                <h3>ငွေပေးချေရန် (Wave Money)</h3>
+                <p><strong>Wave Number:</strong> 09775191427</p>
+                <p><strong>Account Name:</strong> Mg Kyaw Zin Phyo</p>
+            </div>
+
+            <form id="order-form" onsubmit="handleCheckout(event)">
+                <input type="text" id="cust-name" placeholder="သင့်အမည်" required>
+                <input type="tel" id="cust-phone" placeholder="ဖုန်းနံပါတ်" required>
+                <textarea id="cust-address" placeholder="နေရပ်လိပ်စာ" required></textarea>
+                <input type="text" id="cust-tran" placeholder="Wave Pay လုပ်ငန်းစဉ်အမှတ် (Trans ID)" required>
+                <button type="submit">အော်ဒါ အတည်ပြုမည်</button>
+            </form>
+        </section>
+    </main>
+
+    <!-- Live Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-header">Live Chat Support (ငွေသွင်း/ငွေထုတ်)</div>
+        <div class="chat-box" id="chat-box"></div>
+        <div class="chat-input">
+            <input type="text" id="chat-msg" placeholder="စာရိုက်ပါ...">
+            <button onclick="sendChat('Customer')">ပို့မည်</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

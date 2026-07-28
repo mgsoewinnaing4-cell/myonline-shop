@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="background:#eef2f5;">
+    <header style="background:#2c3e50;">
+        <h1>Admin Control Panel</h1>
+        <a href="index.html" class="admin-link">Shop သို့ ပြန်သွားရန်</a>
+    </header>
+
+    <div style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+        <!-- အော်ဒါများ စီမံခြင်း -->
+        <section class="admin-box">
+            <h2>အော်ဒါများနှင့် ငွေသွင်းမှု စီမံရန် (Approve / Reject)</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>ဝယ်ယူသူ</th>
+                        <th>ဖုန်းနံပါတ်</th>
+                        <th>Trans ID</th>
+                        <th>ငွေပမာဏ</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-orders-list"></tbody>
+            </table>
+        </section>
+
+        <!-- သုံးစွဲသူ အကောင့်များ စီမံခြင်း -->
+        <section class="admin-box" style="margin-top:20px;">
+            <h2>သုံးစွဲသူ အကောင့်များ ထိန်းချုပ်ရန် (Active / Block)</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>အမည်</th>
+                        <th>ဖုန်းနံပါတ်</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-users-list"></tbody>
+            </table>
+        </section>
+
+        <!-- Admin Chat -->
+        <section class="admin-box" style="margin-top:20px;">
+            <h2>Live Chat စီမံရန်</h2>
+            <div class="chat-box" id="admin-chat-box" style="height:200px;"></div>
+            <div class="chat-input" style="display:flex; gap:10px; margin-top:10px;">
+                <input type="text" id="admin-chat-msg" style="flex:1; padding:8px;" placeholder="Customer ဆီ စာပြန်ရန်...">
+                <button onclick="sendAdminChat()" style="width:100px;">Reply</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            loadAdminOrders();
+            loadAdminUsers();
+            setInterval(loadAdminOrders, 3000); // ၃ စက္ကန့်တစ်ခါ အလိုအလျောက် Data ပြန်ဆွဲမည်
+        });
+    </script>
+</body>
+</html>

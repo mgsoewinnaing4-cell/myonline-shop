@@ -8,7 +8,7 @@ const PORT = 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // Memory Data (Database အစား ယာယီသိမ်းဆည်းရန်)
 let products = [

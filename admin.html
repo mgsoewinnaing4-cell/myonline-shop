@@ -2,70 +2,1007 @@
 <html lang="my">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bubble Shooter Pro</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background: radial-gradient(circle at top, #1e0b36 0%, #0d041a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        #game-wrapper {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9);
+            border-radius: 18px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            background: #17082b;
+        }
+        #top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .badge {
+            background: rgba(0, 0, 0, 0.45);
+            padding: 6px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge span {
+            color: #ffd700;
+            font-size: 18px;
+            font-weight: 800;
+        }
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.28); }
+        .icon-btn:active { transform: scale(0.92); }
+
+        #power-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.6);
+        }
+        #power-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff9900, #ff0055);
+            transition: width 0.3s ease;
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 420 / 630;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #190730 0%, #2a0c4e 75%, #1a0633 100%);
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        #overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(13, 4, 26, 0.88);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 20;
+            backdrop-filter: blur(6px);
+        }
+        #overlay.hidden { display: none; }
+        #overlay h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffd700, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #overlay .sub-info {
+            font-size: 16px;
+            color: #d1c4e9;
+            margin-bottom: 12px;
+        }
+        #overlay .final-score {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 25px;
+        }
+        #action-btn {
+            background: linear-gradient(135deg, #00c853, #64dd17);
+            border: none;
+            color: #0b2405;
+            padding: 14px 38px;
+            font-size: 20px;
+            font-weight: 800;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 200, 83, 0.45);
+            transition: transform 0.15s;
+        }
+        #action-btn:hover { transform: scale(1.05); }
+        #action-btn:active { transform: scale(0.96); }
+    </style>
 </head>
-<body style="background:#eef2f5;">
-    <header style="background:#2c3e50;">
-        <h1>Admin Control Panel</h1>
-        <a href="index.html" class="admin-link">Shop သို့ ပြန်သွားရန်</a>
-    </header>
+<body>
 
-    <div style="padding: 20px; max-width: 1200px; margin: 0 auto;">
-        <!-- အော်ဒါများ စီမံခြင်း -->
-        <section class="admin-box">
-            <h2>အော်ဒါများနှင့် ငွေသွင်းမှု စီမံရန် (Approve / Reject)</h2>
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>ဝယ်ယူသူ</th>
-                        <th>ဖုန်းနံပါတ်</th>
-                        <th>Trans ID</th>
-                        <th>ငွေပမာဏ</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-orders-list"></tbody>
-            </table>
-        </section>
-
-        <!-- သုံးစွဲသူ အကောင့်များ စီမံခြင်း -->
-        <section class="admin-box" style="margin-top:20px;">
-            <h2>သုံးစွဲသူ အကောင့်များ ထိန်းချုပ်ရန် (Active / Block)</h2>
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>User ID</th>
-                        <th>အမည်</th>
-                        <th>ဖုန်းနံပါတ်</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-users-list"></tbody>
-            </table>
-        </section>
-
-        <!-- Admin Chat -->
-        <section class="admin-box" style="margin-top:20px;">
-            <h2>Live Chat စီမံရန်</h2>
-            <div class="chat-box" id="admin-chat-box" style="height:200px;"></div>
-            <div class="chat-input" style="display:flex; gap:10px; margin-top:10px;">
-                <input type="text" id="admin-chat-msg" style="flex:1; padding:8px;" placeholder="Customer ဆီ စာပြန်ရန်...">
-                <button onclick="sendAdminChat()" style="width:100px;">Reply</button>
-            </div>
-        </section>
+<div id="game-wrapper">
+    <div id="top-bar">
+        <div class="badge">အဆင့် <span id="level-display">1</span></div>
+        <div class="badge">အမှတ် <span id="score-display">0</span></div>
+        <div class="controls">
+            <button class="icon-btn" id="sound-btn" title="အသံ အဖွင့်/အပိတ်" onclick="toggleSound()">🔊</button>
+            <button class="icon-btn" title="အစမှ ပြန်စမည်" onclick="restartFromLevelOne()">🔄</button>
+        </div>
     </div>
+    <div id="power-bar-container" title="ပါဝါပြည့်လျှင် မီးဗုံးရမည်">
+        <div id="power-bar"></div>
+    </div>
+    <div id="canvas-container">
+        <canvas id="gameCanvas" width="420" height="630"></canvas>
+        <div id="overlay" class="hidden">
+            <h1 id="overlay-title">BUBBLE POP PRO</h1>
+            <p class="sub-info" id="overlay-sub">အရောင်တူ ၃ လုံးထိအောင် ပစ်ခွဲပါ</p>
+            <div class="final-score" id="overlay-score"></div>
+            <button id="action-btn" onclick="handleOverlayAction()">စတင်ကစားမယ်</button>
+        </div>
+    </div>
+</div>
 
-    <script src="script.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            loadAdminOrders();
-            loadAdminUsers();
-            setInterval(loadAdminOrders, 3000); // ၃ စက္ကန့်တစ်ခါ အလိုအလျောက် Data ပြန်ဆွဲမည်
-        });
-    </script>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const levelDisplay = document.getElementById('level-display');
+    const scoreDisplay = document.getElementById('score-display');
+    const powerBar = document.getElementById('power-bar');
+    const soundBtn = document.getElementById('sound-btn');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlay-title');
+    const overlaySub = document.getElementById('overlay-sub');
+    const overlayScore = document.getElementById('overlay-score');
+    const actionBtn = document.getElementById('action-btn');
+
+    const COLS = 10;
+    const ROWS = 15;
+    const RADIUS = canvas.width / (COLS * 2); // 21px
+    const ROW_HEIGHT = RADIUS * Math.sqrt(3); // ~36.37px
+    const SHOOTER_X = canvas.width / 2;
+    const SHOOTER_Y = canvas.height - 52;
+    const SWAP_X = 65;
+    const SWAP_Y = canvas.height - 46;
+    const DANGER_LINE_Y = canvas.height - 102;
+
+    const ALL_COLORS = [
+        { id: 'red',    light: '#ff7675', main: '#d63031', dark: '#6e0d0e' },
+        { id: 'yellow', light: '#ffeaa7', main: '#fdcb6e', dark: '#9c6f19' },
+        { id: 'green',  light: '#55efc4', main: '#00b894', dark: '#004d3d' },
+        { id: 'blue',   light: '#74b9ff', main: '#0984e3', dark: '#033459' },
+        { id: 'purple', light: '#a29bfe', main: '#6c5ce7', dark: '#291f73' },
+        { id: 'orange', light: '#fab1a0', main: '#e17055', dark: '#732614' },
+        { id: 'pink',   light: '#fd79a8', main: '#e84393', dark: '#6e113e' }
+    ];
+    const BOMB_TYPE = { id: 'bomb', light: '#636e72', main: '#2d3436', dark: '#000000' };
+
+    let currentLevel = 1;
+    let score = 0;
+    let powerCharge = 0;
+    let grid = [];
+    let rowParity = [];
+    let activeColors = [];
+    let shooterBubble = null;
+    let nextBubble = null;
+    let aimAngle = -Math.PI / 2;
+    let isShooting = false;
+    let gameState = 'PLAYING';
+    let shotsBeforeDrop = 6;
+    let shotsCounter = 0;
+    let soundEnabled = true;
+
+    let particles = [];
+    let fallingBubbles = [];
+    let floatingTexts = [];
+    let shakeTime = 0;
+
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) audioCtx = new AudioContext();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function toggleSound() {
+        soundEnabled = !soundEnabled;
+        soundBtn.innerText = soundEnabled ? '🔊' : '🔇';
+    }
+
+    function playSound(type, pitchOffset = 0) {
+        if (!soundEnabled) return;
+        initAudio();
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'shoot') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(280, now);
+            osc.frequency.exponentialRampToValueAtTime(620, now + 0.09);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+            osc.start(now);
+            osc.stop(now + 0.09);
+        } else if (type === 'pop') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(420 + pitchOffset * 45, now);
+            osc.frequency.exponentialRampToValueAtTime(880 + pitchOffset * 50, now + 0.11);
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.11);
+            osc.start(now);
+            osc.stop(now + 0.11);
+        } else if (type === 'bomb') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(140, now);
+            osc.frequency.exponentialRampToValueAtTime(30, now + 0.45);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        } else if (type === 'bounce') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(220, now);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.05);
+        } else if (type === 'swap') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(500, now);
+            osc.frequency.exponentialRampToValueAtTime(350, now + 0.08);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        } else if (type === 'win') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.connect(g);
+                g.connect(audioCtx.destination);
+                o.type = 'triangle';
+                o.frequency.setValueAtTime(freq, now + idx * 0.1);
+                g.gain.setValueAtTime(0.2, now + idx * 0.1);
+                g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
+                o.start(now + idx * 0.1);
+                o.stop(now + idx * 0.1 + 0.25);
+            });
+        } else if (type === 'lose') {
+            [300, 250, 200, 150].forEach((freq, idx) => {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.connect(g);
+                g.connect(audioCtx.destination);
+                o.type = 'sawtooth';
+                o.frequency.setValueAtTime(freq, now + idx * 0.12);
+                g.gain.setValueAtTime(0.18, now + idx * 0.12);
+                g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.25);
+                o.start(now + idx * 0.12);
+                o.stop(now + idx * 0.12 + 0.25);
+            });
+        }
+    }
+
+    function getLevelConfig(lvl) {
+        const numColors = Math.min(4 + Math.floor((lvl - 1) / 2), ALL_COLORS.length);
+        const startRows = Math.min(5 + Math.floor((lvl - 1) / 2), 9);
+        const dropInterval = Math.max(6 - Math.floor((lvl - 1) / 2), 3);
+        return { numColors, startRows, dropInterval };
+    }
+
+    function restartFromLevelOne() {
+        currentLevel = 1;
+        score = 0;
+        powerCharge = 0;
+        setupLevel(currentLevel);
+    }
+
+    function handleOverlayAction() {
+        if (gameState === 'GAME_OVER') {
+            restartFromLevelOne();
+        } else if (gameState === 'LEVEL_UP') {
+            currentLevel++;
+            setupLevel(currentLevel);
+        }
+    }
+
+    function setupLevel(lvl) {
+        const config = getLevelConfig(lvl);
+        activeColors = ALL_COLORS.slice(0, config.numColors);
+        shotsBeforeDrop = config.dropInterval;
+        shotsCounter = 0;
+        grid = [];
+        rowParity = [];
+        particles = [];
+        fallingBubbles = [];
+        floatingTexts = [];
+        isShooting = false;
+        gameState = 'PLAYING';
+        overlay.classList.add('hidden');
+        updateHUD();
+
+        for (let r = 0; r < ROWS; r++) {
+            let parity = r % 2;
+            rowParity[r] = parity;
+            let colsInRow = parity === 1 ? COLS - 1 : COLS;
+            grid[r] = new Array(colsInRow).fill(null);
+
+            if (r < config.startRows) {
+                for (let c = 0; c < colsInRow; c++) {
+                    if (c > 0 && Math.random() < 0.35 && grid[r][c - 1]) {
+                        grid[r][c] = grid[r][c - 1];
+                    } else {
+                        grid[r][c] = activeColors[Math.floor(Math.random() * activeColors.length)];
+                    }
+                }
+            }
+        }
+
+        nextBubble = pickSmartColor();
+        loadNextShot();
+    }
+
+    function pickSmartColor() {
+        const present = new Set();
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < grid[r].length; c++) {
+                if (grid[r][c]) present.add(grid[r][c]);
+            }
+        }
+        const pool = Array.from(present);
+        if (pool.length === 0) return activeColors[0];
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function loadNextShot() {
+        let colorToLoad = nextBubble;
+        if (powerCharge >= 100) {
+            colorToLoad = BOMB_TYPE;
+            powerCharge = 0;
+            updateHUD();
+        }
+        shooterBubble = {
+            x: SHOOTER_X,
+            y: SHOOTER_Y,
+            vx: 0,
+            vy: 0,
+            color: colorToLoad
+        };
+        nextBubble = pickSmartColor();
+        isShooting = false;
+    }
+
+    function swapBubbles() {
+        if (gameState !== 'PLAYING' || isShooting || !shooterBubble || !nextBubble) return;
+        if (shooterBubble.color.id === 'bomb') return;
+        const temp = shooterBubble.color;
+        shooterBubble.color = nextBubble;
+        nextBubble = temp;
+        playSound('swap');
+    }
+
+    function updateHUD() {
+        levelDisplay.innerText = currentLevel;
+        scoreDisplay.innerText = score;
+        powerBar.style.width = `${Math.min(powerCharge, 100)}%`;
+    }
+
+    function getTilePos(r, c) {
+        let x = c * RADIUS * 2 + RADIUS;
+        if (rowParity[r] === 1) x += RADIUS;
+        let y = r * ROW_HEIGHT + RADIUS;
+        return { x, y };
+    }
+
+    function getNeighbors(r, c) {
+        const isIndented = rowParity[r] === 1;
+        const offsets = isIndented
+            ? [[-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0], [1, 1]]
+            : [[-1, -1], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 0]];
+
+        const list = [];
+        for (const [dr, dc] of offsets) {
+            const nr = r + dr;
+            const nc = c + dc;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < grid[nr].length) {
+                list.push({ r: nr, c: nc });
+            }
+        }
+        return list;
+    }
+
+    function getCanvasCoords(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+    }
+
+    function handleAim(clientX, clientY) {
+        if (gameState !== 'PLAYING' || isShooting) return;
+        const pos = getCanvasCoords(clientX, clientY);
+        const dx = pos.x - SHOOTER_X;
+        const dy = pos.y - SHOOTER_Y;
+        let angle = Math.atan2(dy, dx);
+
+        const minAngle = -Math.PI + 0.18;
+        const maxAngle = -0.18;
+        if (angle > 0) {
+            angle = pos.x < SHOOTER_X ? minAngle : maxAngle;
+        } else {
+            angle = Math.max(minAngle, Math.min(maxAngle, angle));
+        }
+        aimAngle = angle;
+    }
+
+    function handlePointerDown(clientX, clientY) {
+        if (gameState !== 'PLAYING' || isShooting) return;
+        const pos = getCanvasCoords(clientX, clientY);
+
+        if (Math.hypot(pos.x - SWAP_X, pos.y - SWAP_Y) <= RADIUS * 1.5) {
+            swapBubbles();
+            return;
+        }
+
+        handleAim(clientX, clientY);
+        fireBubble();
+    }
+
+    function fireBubble() {
+        if (gameState !== 'PLAYING' || isShooting) return;
+        const speed = 16;
+        shooterBubble.vx = Math.cos(aimAngle) * speed;
+        shooterBubble.vy = Math.sin(aimAngle) * speed;
+        isShooting = true;
+        playSound('shoot');
+    }
+
+    canvas.addEventListener('mousemove', e => handleAim(e.clientX, e.clientY));
+    canvas.addEventListener('mousedown', e => handlePointerDown(e.clientX, e.clientY));
+
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        handleAim(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const pos = getCanvasCoords(touch.clientX, touch.clientY);
+        if (Math.hypot(pos.x - SWAP_X, pos.y - SWAP_Y) <= RADIUS * 1.6) {
+            swapBubbles();
+            return;
+        }
+        handleAim(touch.clientX, touch.clientY);
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+        e.preventDefault();
+        if (!isShooting && gameState === 'PLAYING') {
+            fireBubble();
+        }
+    });
+
+    function findMatchingCluster(startR, startC, targetColor) {
+        const visited = new Set([`${startR},${startC}`]);
+        const queue = [{ r: startR, c: startC }];
+        const cluster = [];
+
+        while (queue.length > 0) {
+            const curr = queue.shift();
+            cluster.push(curr);
+
+            for (const n of getNeighbors(curr.r, curr.c)) {
+                const key = `${n.r},${n.c}`;
+                if (!visited.has(key) && grid[n.r][n.c] && grid[n.r][n.c].id === targetColor.id) {
+                    visited.add(key);
+                    queue.push(n);
+                }
+            }
+        }
+        return cluster;
+    }
+
+    function dropDisconnectedBubbles() {
+        const connected = new Set();
+        const queue = [];
+
+        for (let c = 0; c < grid[0].length; c++) {
+            if (grid[0][c]) {
+                connected.add(`0,${c}`);
+                queue.push({ r: 0, c });
+            }
+        }
+
+        while (queue.length > 0) {
+            const curr = queue.shift();
+            for (const n of getNeighbors(curr.r, curr.c)) {
+                const key = `${n.r},${n.c}`;
+                if (!connected.has(key) && grid[n.r][n.c]) {
+                    connected.add(key);
+                    queue.push(n);
+                }
+            }
+        }
+
+        let droppedCount = 0;
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < grid[r].length; c++) {
+                if (grid[r][c] && !connected.has(`${r},${c}`)) {
+                    const pos = getTilePos(r, c);
+                    fallingBubbles.push({
+                        x: pos.x,
+                        y: pos.y,
+                        vx: (Math.random() - 0.5) * 3,
+                        vy: -2 + Math.random() * 2,
+                        color: grid[r][c]
+                    });
+                    addFloatingText(pos.x, pos.y, '+20', '#7bed9f');
+                    grid[r][c] = null;
+                    score += 20;
+                    droppedCount++;
+                }
+            }
+        }
+        return droppedCount;
+    }
+
+    function snapBubbleToGrid() {
+        let bestDist = Infinity;
+        let bestR = 0;
+        let bestC = 0;
+
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < grid[r].length; c++) {
+                if (!grid[r][c]) {
+                    const pos = getTilePos(r, c);
+                    const dist = Math.hypot(shooterBubble.x - pos.x, shooterBubble.y - pos.y);
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestR = r;
+                        bestC = c;
+                    }
+                }
+            }
+        }
+
+        if (shooterBubble.color.id === 'bomb') {
+            playSound('bomb');
+            shakeTime = 15;
+            const centerPos = getTilePos(bestR, bestC);
+            createExplosion(centerPos.x, centerPos.y, '#ff9f43', 28);
+
+            const toDestroy = new Set([`${bestR},${bestC}`]);
+            const ring1 = getNeighbors(bestR, bestC);
+            ring1.forEach(n => {
+                toDestroy.add(`${n.r},${n.c}`);
+                getNeighbors(n.r, n.c).forEach(n2 => toDestroy.add(`${n2.r},${n2.c}`));
+            });
+
+            toDestroy.forEach(key => {
+                const [r, c] = key.split(',').map(Number);
+                if (grid[r] && grid[r][c]) {
+                    const p = getTilePos(r, c);
+                    createExplosion(p.x, p.y, grid[r][c].main, 6);
+                    grid[r][c] = null;
+                    score += 15;
+                }
+            });
+
+            addFloatingText(centerPos.x, centerPos.y, 'BOOM!', '#ff6b6b');
+            dropDisconnectedBubbles();
+            finalizeTurn();
+            return;
+        }
+
+        grid[bestR][bestC] = shooterBubble.color;
+        const cluster = findMatchingCluster(bestR, bestC, shooterBubble.color);
+
+        if (cluster.length >= 3) {
+            cluster.forEach(cell => {
+                const pos = getTilePos(cell.r, cell.c);
+                createExplosion(pos.x, pos.y, grid[cell.r][cell.c].main, 8);
+                addFloatingText(pos.x, pos.y, '+10', '#ffd700');
+                grid[cell.r][cell.c] = null;
+                score += 10;
+            });
+
+            playSound('pop', Math.min(cluster.length, 6));
+            const dropped = dropDisconnectedBubbles();
+            powerCharge += (cluster.length + dropped) * 6;
+        } else {
+            shotsCounter++;
+            if (shotsCounter >= shotsBeforeDrop) {
+                shotsCounter = 0;
+                pushNewTopRow();
+            }
+        }
+
+        finalizeTurn();
+    }
+
+    function pushNewTopRow() {
+        const newParity = rowParity[0] === 0 ? 1 : 0;
+        const colsInNewRow = newParity === 1 ? COLS - 1 : COLS;
+        const newRow = [];
+
+        for (let c = 0; c < colsInNewRow; c++) {
+            newRow.push(activeColors[Math.floor(Math.random() * activeColors.length)]);
+        }
+
+        grid.pop();
+        rowParity.pop();
+        grid.unshift(newRow);
+        rowParity.unshift(newParity);
+        shakeTime = 8;
+    }
+
+    function finalizeTurn() {
+        const existing = new Set();
+        let totalBubbles = 0;
+        let lowestY = 0;
+
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < grid[r].length; c++) {
+                if (grid[r][c]) {
+                    totalBubbles++;
+                    existing.add(grid[r][c]);
+                    const pos = getTilePos(r, c);
+                    if (pos.y + RADIUS > lowestY) lowestY = pos.y + RADIUS;
+                }
+            }
+        }
+
+        updateHUD();
+
+        if (totalBubbles === 0) {
+            playSound('win');
+            const levelBonus = currentLevel * 100;
+            score += levelBonus;
+            updateHUD();
+            gameState = 'LEVEL_UP';
+            overlayTitle.innerText = `အဆင့် ${currentLevel} အောင်မြင်ပြီ! 🎉`;
+            overlaySub.innerText = `အဆင့်အောင်ဆုကြေး +${levelBonus} မှတ် ရရှိပါသည်`;
+            overlayScore.innerText = `စုစုပေါင်းရမှတ်: ${score}`;
+            actionBtn.innerText = `အဆင့် ${currentLevel + 1} ဆက်ကစားမယ်`;
+            overlay.classList.remove('hidden');
+            return;
+        }
+
+        // အနီရောင်မျဉ်းကြောင်း (DANGER_LINE_Y) ကို ထိလျှင် ချက်ချင်းရှုံးမည်
+        if (lowestY >= DANGER_LINE_Y) {
+            playSound('lose');
+            gameState = 'GAME_OVER';
+            overlayTitle.innerText = 'စည်းမျဉ်းထိသွားလို့ ရှုံးပါပြီ 😢';
+            overlaySub.innerText = `အဆင့် ${currentLevel} အထိ ရောက်ရှိခဲ့ပါသည်`;
+            overlayScore.innerText = `စုစုပေါင်းရမှတ်: ${score}`;
+            actionBtn.innerText = 'အစမှ ပြန်ကစားမယ်';
+            overlay.classList.remove('hidden');
+            return;
+        }
+
+        if (!existing.has(nextBubble)) {
+            nextBubble = pickSmartColor();
+        }
+        loadNextShot();
+    }
+
+    function createExplosion(x, y, color, count) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 1.5 + Math.random() * 4;
+            particles.push({
+                x, y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                radius: 3 + Math.random() * 3,
+                alpha: 1,
+                color
+            });
+        }
+    }
+
+    function addFloatingText(x, y, text, color) {
+        floatingTexts.push({ x, y, text, color, alpha: 1 });
+    }
+
+    function update() {
+        if (shakeTime > 0) shakeTime--;
+
+        if (isShooting && shooterBubble) {
+            const steps = 2;
+            for (let s = 0; s < steps; s++) {
+                shooterBubble.x += shooterBubble.vx / steps;
+                shooterBubble.y += shooterBubble.vy / steps;
+
+                if (shooterBubble.x - RADIUS <= 0) {
+                    shooterBubble.x = RADIUS;
+                    shooterBubble.vx *= -1;
+                    playSound('bounce');
+                } else if (shooterBubble.x + RADIUS >= canvas.width) {
+                    shooterBubble.x = canvas.width - RADIUS;
+                    shooterBubble.vx *= -1;
+                    playSound('bounce');
+                }
+
+                if (shooterBubble.y - RADIUS <= 0) {
+                    shooterBubble.y = RADIUS;
+                    snapBubbleToGrid();
+                    return;
+                }
+
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < grid[r].length; c++) {
+                        if (grid[r][c]) {
+                            const pos = getTilePos(r, c);
+                            const dist = Math.hypot(shooterBubble.x - pos.x, shooterBubble.y - pos.y);
+                            if (dist < RADIUS * 1.82) {
+                                snapBubbleToGrid();
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= 0.035;
+            if (p.alpha <= 0) particles.splice(i, 1);
+        }
+
+        for (let i = fallingBubbles.length - 1; i >= 0; i--) {
+            const fb = fallingBubbles[i];
+            fb.x += fb.vx;
+            fb.y += fb.vy;
+            fb.vy += 0.55;
+            if (fb.y > canvas.height + RADIUS * 2) fallingBubbles.splice(i, 1);
+        }
+
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            const ft = floatingTexts[i];
+            ft.y -= 1.2;
+            ft.alpha -= 0.025;
+            if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+        }
+    }
+
+    function drawBubble(x, y, radius, colorObj) {
+        ctx.save();
+        const grad = ctx.createRadialGradient(
+            x - radius * 0.32, y - radius * 0.32, radius * 0.08,
+            x, y, radius
+        );
+        grad.addColorStop(0, colorObj.light);
+        grad.addColorStop(0.65, colorObj.main);
+        grad.addColorStop(1, colorObj.dark);
+
+        ctx.beginPath();
+        ctx.arc(x, y, radius - 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        if (colorObj.id === 'bomb') {
+            ctx.fillStyle = '#ff9f43';
+            ctx.beginPath();
+            ctx.arc(x, y, radius * 0.45, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💣', x, y + 1);
+        } else {
+            ctx.beginPath();
+            ctx.arc(x - radius * 0.3, y - radius * 0.32, radius * 0.24, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.48)';
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    function drawAimingGuide() {
+        if (gameState !== 'PLAYING' || isShooting || !shooterBubble) return;
+
+        let simX = SHOOTER_X;
+        let simY = SHOOTER_Y;
+        let simVx = Math.cos(aimAngle) * 15;
+        let simVy = Math.sin(aimAngle) * 15;
+
+        for (let i = 0; i < 22; i++) {
+            simX += simVx;
+            simY += simVy;
+
+            if (simX - RADIUS < 0) {
+                simX = RADIUS;
+                simVx *= -1;
+            } else if (simX + RADIUS > canvas.width) {
+                simX = canvas.width - RADIUS;
+                simVx *= -1;
+            }
+
+            if (simY < RADIUS) break;
+
+            let hit = false;
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < grid[r].length; c++) {
+                    if (grid[r][c]) {
+                        const pos = getTilePos(r, c);
+                        if (Math.hypot(simX - pos.x, simY - pos.y) < RADIUS * 1.8) {
+                            hit = true;
+                            break;
+                        }
+                    }
+                }
+                if (hit) break;
+            }
+
+            const dotColor = shooterBubble.color.id === 'bomb'
+                ? { light: '#ffbe76', main: '#ff7979', dark: '#eb4d4b' }
+                : shooterBubble.color;
+
+            drawBubble(simX, simY, 4.5, dotColor);
+            if (hit) break;
+        }
+    }
+
+    function draw() {
+        ctx.save();
+        if (shakeTime > 0) {
+            const dx = (Math.random() - 0.5) * 6;
+            const dy = (Math.random() - 0.5) * 6;
+            ctx.translate(dx, dy);
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // အန္တရာယ်မျဉ်း (Danger Line)
+        ctx.beginPath();
+        ctx.setLineDash([8, 6]);
+        ctx.moveTo(0, DANGER_LINE_Y);
+        ctx.lineTo(canvas.width, DANGER_LINE_Y);
+        ctx.strokeStyle = 'rgba(255, 71, 87, 0.75)';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // အပေါ်တန်းထပ်ကျဖို့ ကျန်သေးသည့် အကြိမ်ရေ အစက်လေးများ
+        const remainingShots = shotsBeforeDrop - shotsCounter;
+        for (let i = 0; i < shotsBeforeDrop; i++) {
+            ctx.beginPath();
+            ctx.arc(canvas.width - 25 - i * 11, canvas.height - 20, 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = i < remainingShots ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.15)';
+            ctx.fill();
+        }
+
+        // အပေါ်မှ ရောင်စုံဘောလုံးများ
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < grid[r].length; c++) {
+                if (grid[r][c]) {
+                    const pos = getTilePos(r, c);
+                    drawBubble(pos.x, pos.y, RADIUS, grid[r][c]);
+                }
+            }
+        }
+
+        // ပြုတ်ကျနေသည့် ဘောလုံးများ
+        for (const fb of fallingBubbles) {
+            drawBubble(fb.x, fb.y, RADIUS, fb.color);
+        }
+
+        // ပစ်မည့်လမ်းကြောင်းပြ အစက်များ
+        drawAimingGuide();
+
+        // ပစ်စင် အဝိုင်း
+        ctx.beginPath();
+        ctx.arc(SHOOTER_X, SHOOTER_Y, RADIUS + 8, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(162, 155, 254, 0.6)';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // လက်ရှိ ပစ်မည့် ဘောလုံး
+        if (shooterBubble) {
+            drawBubble(shooterBubble.x, shooterBubble.y, RADIUS, shooterBubble.color);
+        }
+
+        // လဲလှယ်ပစ်နိုင်သည့် ဘောလုံး
+        if (nextBubble) {
+            ctx.beginPath();
+            ctx.arc(SWAP_X, SWAP_Y, RADIUS * 0.78 + 4, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fill();
+            drawBubble(SWAP_X, SWAP_Y, RADIUS * 0.78, nextBubble);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('လဲလှယ်ရန်', SWAP_X, SWAP_Y + RADIUS + 12);
+        }
+
+        // ပေါက်ကွဲမှု အမှုန်များ
+        for (const p of particles) {
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // ရမှတ် Animation
+        for (const ft of floatingTexts) {
+            ctx.save();
+            ctx.globalAlpha = ft.alpha;
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillStyle = ft.color;
+            ctx.textAlign = 'center';
+            ctx.fillText(ft.text, ft.x, ft.y);
+            ctx.restore();
+        }
+
+        ctx.restore();
+    }
+
+    function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    // စာမျက်နှာပွင့်တာနဲ့ Level 1 ကို ချက်ချင်းစတင်မည်
+    setupLevel(1);
+    loop();
+</script>
 </body>
 </html>

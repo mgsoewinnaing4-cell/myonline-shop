@@ -184,7 +184,7 @@
 
     const COLS = 10;
     const ROWS = 15;
-    const RADIUS = 21; // 420 / 20
+    const RADIUS = 21;
     const ROW_HEIGHT = 36.37;
     const SHOOTER_X = 210;
     const SHOOTER_Y = 578;
@@ -387,7 +387,7 @@
         const present = [];
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < grid[r].length; c++) {
-                if (grid[r][c] && !present.includes(grid[r][c])) {
+                if (grid[r][c] && present.indexOf(grid[r][c]) === -1) {
                     present.push(grid[r][c]);
                 }
             }
@@ -433,7 +433,7 @@
         let x = c * RADIUS * 2 + RADIUS;
         if (rowParity[r] === 1) x += RADIUS;
         let y = r * ROW_HEIGHT + RADIUS;
-        return { x, y };
+        return { x: x, y: y };
     }
 
     function getNeighbors(r, c) {
@@ -500,15 +500,15 @@
         playSound('shoot');
     }
 
-    canvas.addEventListener('mousemove', e => handleAim(e.clientX, e.clientY));
-    canvas.addEventListener('mousedown', e => handlePointerDown(e.clientX, e.clientY));
+    canvas.addEventListener('mousemove', function(e) { handleAim(e.clientX, e.clientY); });
+    canvas.addEventListener('mousedown', function(e) { handlePointerDown(e.clientX, e.clientY); });
 
-    canvas.addEventListener('touchmove', e => {
+    canvas.addEventListener('touchmove', function(e) {
         e.preventDefault();
         handleAim(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: false });
 
-    canvas.addEventListener('touchstart', e => {
+    canvas.addEventListener('touchstart', function(e) {
         e.preventDefault();
         const touch = e.touches[0];
         const pos = getCanvasCoords(touch.clientX, touch.clientY);
@@ -519,7 +519,7 @@
         handleAim(touch.clientX, touch.clientY);
     }, { passive: false });
 
-    canvas.addEventListener('touchend', e => {
+    canvas.addEventListener('touchend', function(e) {
         e.preventDefault();
         if (!isShooting && gameState === 'PLAYING') {
             fireBubble();
@@ -527,7 +527,8 @@
     });
 
     function findMatchingCluster(startR, startC, targetColor) {
-        const visited = new Set([startR + ',' + startC]);
+        const visited = {};
+        visited[startR + ',' + startC] = true;
         const queue = [{ r: startR, c: startC }];
         const cluster = [];
 
@@ -539,8 +540,8 @@
             for (let i = 0; i < neighbors.length; i++) {
                 const n = neighbors[i];
                 const key = n.r + ',' + n.c;
-                if (!visited.has(key) && grid[n.r][n.c] && grid[n.r][n.c].id === targetColor.id) {
-                    visited.add(key);
+                if (!visited[key] && grid[n.r][n.c] && grid[n.r][n.c].id === targetColor.id) {
+                    visited[key] = true;
                     queue.push(n);
                 }
             }
@@ -549,12 +550,12 @@
     }
 
     function dropDisconnectedBubbles() {
-        const connected = new Set();
+        const connected = {};
         const queue = [];
 
         for (let c = 0; c < grid[0].length; c++) {
             if (grid[0][c]) {
-                connected.add('0,' + c);
+                connected['0,' + c] = true;
                 queue.push({ r: 0, c: c });
             }
         }
@@ -565,8 +566,8 @@
             for (let i = 0; i < neighbors.length; i++) {
                 const n = neighbors[i];
                 const key = n.r + ',' + n.c;
-                if (!connected.has(key) && grid[n.r][n.c]) {
-                    connected.add(key);
+                if (!connected[key] && grid[n.r][n.c]) {
+                    connected[key] = true;
                     queue.push(n);
                 }
             }
@@ -575,7 +576,7 @@
         let droppedCount = 0;
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < grid[r].length; c++) {
-                if (grid[r][c] && !connected.has(r + ',' + c)) {
+                if (grid[r][c] && !connected[r + ',' + c]) {
                     const pos = getTilePos(r, c);
                     fallingBubbles.push({
                         x: pos.x,
@@ -619,14 +620,19 @@
             const centerPos = getTilePos(bestR, bestC);
             createExplosion(centerPos.x, centerPos.y, '#ff9f43', 28);
 
-            const toDestroy = new Set([bestR + ',' + bestC]);
+            const toDestroy = {};
+            toDestroy[bestR + ',' + bestC] = true;
             const ring1 = getNeighbors(bestR, bestC);
-            ring1.forEach(n => {
-                toDestroy.add(n.r + ',' + n.c);
-                getNeighbors(n.r, n.c).forEach(n2 => toDestroy.add(n2.r + ',' + n2.c));
-            });
+            for (let i = 0; i < ring1.length; i++) {
+                const n = ring1[i];
+                toDestroy[n.r + ',' + n.c] = true;
+                const ring2 = getNeighbors(n.r, n.c);
+                for (let j = 0; j < ring2.length; j++) {
+                    toDestroy[ring2[j].r + ',' + ring2[j].c] = true;
+                }
+            }
 
-            toDestroy.forEach(key => {
+            for (const key in toDestroy) {
                 const parts = key.split(',');
                 const r = Number(parts[0]);
                 const c = Number(parts[1]);
@@ -636,7 +642,7 @@
                     grid[r][c] = null;
                     score += 15;
                 }
-            });
+            }
 
             addFloatingText(centerPos.x, centerPos.y, 'BOOM!', '#ff6b6b');
             dropDisconnectedBubbles();
@@ -648,13 +654,14 @@
         const cluster = findMatchingCluster(bestR, bestC, shooterBubble.color);
 
         if (cluster.length >= 3) {
-            cluster.forEach(cell => {
+            for (let i = 0; i < cluster.length; i++) {
+                const cell = cluster[i];
                 const pos = getTilePos(cell.r, cell.c);
                 createExplosion(pos.x, pos.y, grid[cell.r][cell.c].main, 8);
                 addFloatingText(pos.x, pos.y, '+10', '#ffd700');
                 grid[cell.r][cell.c] = null;
                 score += 10;
-            });
+            }
 
             playSound('pop', Math.min(cluster.length, 6));
             const dropped = dropDisconnectedBubbles();
@@ -695,7 +702,7 @@
             for (let c = 0; c < grid[r].length; c++) {
                 if (grid[r][c]) {
                     totalBubbles++;
-                    if (!existing.includes(grid[r][c])) existing.push(grid[r][c]);
+                    if (existing.indexOf(grid[r][c]) === -1) existing.push(grid[r][c]);
                     const pos = getTilePos(r, c);
                     if (pos.y + RADIUS > lowestY) lowestY = pos.y + RADIUS;
                 }
@@ -729,7 +736,7 @@
             return;
         }
 
-        if (!existing.includes(nextBubble)) {
+        if (existing.indexOf(nextBubble) === -1) {
             nextBubble = pickSmartColor();
         }
         loadNextShot();
@@ -740,18 +747,18 @@
             const angle = Math.random() * Math.PI * 2;
             const speed = 1.5 + Math.random() * 4;
             particles.push({
-                x, y,
+                x: x, y: y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 radius: 3 + Math.random() * 3,
                 alpha: 1,
-                color
+                color: color
             });
         }
     }
 
     function addFloatingText(x, y, text, color) {
-        floatingTexts.push({ x, y, text, color, alpha: 1 });
+        floatingTexts.push({ x: x, y: y, text: text, color: color, alpha: 1 });
     }
 
     function update() {
@@ -908,7 +915,6 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // အန္တရာယ်မျဉ်း (Danger Line)
         ctx.beginPath();
         ctx.setLineDash([8, 6]);
         ctx.moveTo(0, DANGER_LINE_Y);
@@ -918,7 +924,6 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // အပေါ်တန်းထပ်ကျဖို့ ကျန်သေးသည့် အကြိမ်ရေ အစက်လေးများ
         const remainingShots = shotsBeforeDrop - shotsCounter;
         for (let i = 0; i < shotsBeforeDrop; i++) {
             ctx.beginPath();
@@ -927,7 +932,6 @@
             ctx.fill();
         }
 
-        // အပေါ်မှ ရောင်စုံဘောလုံးများ
         for (let r = 0; r < ROWS; r++) {
             if (!grid[r]) continue;
             for (let c = 0; c < grid[r].length; c++) {
@@ -938,16 +942,13 @@
             }
         }
 
-        // ပြုတ်ကျနေသည့် ဘောလုံးများ
         for (let i = 0; i < fallingBubbles.length; i++) {
             const fb = fallingBubbles[i];
             drawBubble(fb.x, fb.y, RADIUS, fb.color);
         }
 
-        // ပစ်မည့်လမ်းကြောင်းပြ အစက်များ
         drawAimingGuide();
 
-        // ပစ်စင် အဝိုင်း
         ctx.beginPath();
         ctx.arc(SHOOTER_X, SHOOTER_Y, RADIUS + 8, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
@@ -956,12 +957,10 @@
         ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // လက်ရှိ ပစ်မည့် ဘောလုံး
         if (shooterBubble) {
             drawBubble(shooterBubble.x, shooterBubble.y, RADIUS, shooterBubble.color);
         }
 
-        // လဲလှယ်ပစ်နိုင်သည့် ဘောလုံး
         if (nextBubble) {
             ctx.beginPath();
             ctx.arc(SWAP_X, SWAP_Y, RADIUS * 0.78 + 4, 0, Math.PI * 2);
@@ -975,7 +974,6 @@
             ctx.fillText('လဲလှယ်ရန်', SWAP_X, SWAP_Y + RADIUS + 12);
         }
 
-        // ပေါက်ကွဲမှု အမှုန်များ
         for (let i = 0; i < particles.length; i++) {
             const p = particles[i];
             ctx.save();
@@ -987,7 +985,6 @@
             ctx.restore();
         }
 
-        // ရမှတ် Animation
         for (let i = 0; i < floatingTexts.length; i++) {
             const ft = floatingTexts[i];
             ctx.save();
@@ -1008,10 +1005,8 @@
         requestAnimationFrame(loop);
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-        setupLevel(1);
-        loop();
-    });
+    setupLevel(1);
+    loop();
 </script>
 </body>
 </html>

@@ -74,9 +74,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s, transform 0.1s;
         }
-        .icon-btn:hover { background: rgba(255, 255, 255, 0.28); }
         .icon-btn:active { transform: scale(0.92); }
 
         #power-bar-container {
@@ -108,7 +106,7 @@
         #overlay {
             position: absolute;
             inset: 0;
-            background: rgba(13, 4, 26, 0.88);
+            background: rgba(13, 4, 26, 0.9);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -116,15 +114,12 @@
             text-align: center;
             padding: 20px;
             z-index: 20;
-            backdrop-filter: blur(6px);
         }
         #overlay.hidden { display: none; }
         #overlay h1 {
             font-size: 32px;
             margin-bottom: 10px;
-            background: linear-gradient(45deg, #ffd700, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ffd700;
         }
         #overlay .sub-info {
             font-size: 16px;
@@ -146,11 +141,7 @@
             font-weight: 800;
             border-radius: 30px;
             cursor: pointer;
-            box-shadow: 0 6px 20px rgba(0, 200, 83, 0.45);
-            transition: transform 0.15s;
         }
-        #action-btn:hover { transform: scale(1.05); }
-        #action-btn:active { transform: scale(0.96); }
     </style>
 </head>
 <body>
@@ -160,20 +151,20 @@
         <div class="badge">အဆင့် <span id="level-display">1</span></div>
         <div class="badge">အမှတ် <span id="score-display">0</span></div>
         <div class="controls">
-            <button class="icon-btn" id="sound-btn" title="အသံ အဖွင့်/အပိတ်" onclick="toggleSound()">🔊</button>
-            <button class="icon-btn" title="အစမှ ပြန်စမည်" onclick="restartFromLevelOne()">🔄</button>
+            <button class="icon-btn" id="sound-btn" onclick="toggleSound()">🔊</button>
+            <button class="icon-btn" onclick="restartFromLevelOne()">🔄</button>
         </div>
     </div>
-    <div id="power-bar-container" title="ပါဝါပြည့်လျှင် မီးဗုံးရမည်">
+    <div id="power-bar-container">
         <div id="power-bar"></div>
     </div>
     <div id="canvas-container">
         <canvas id="gameCanvas" width="420" height="630"></canvas>
         <div id="overlay" class="hidden">
-            <h1 id="overlay-title">BUBBLE POP PRO</h1>
-            <p class="sub-info" id="overlay-sub">အရောင်တူ ၃ လုံးထိအောင် ပစ်ခွဲပါ</p>
+            <h1 id="overlay-title"></h1>
+            <p class="sub-info" id="overlay-sub"></p>
             <div class="final-score" id="overlay-score"></div>
-            <button id="action-btn" onclick="handleOverlayAction()">စတင်ကစားမယ်</button>
+            <button id="action-btn" onclick="handleOverlayAction()">ဆက်ကစားမယ်</button>
         </div>
     </div>
 </div>
@@ -193,13 +184,13 @@
 
     const COLS = 10;
     const ROWS = 15;
-    const RADIUS = canvas.width / (COLS * 2); // 21px
-    const ROW_HEIGHT = RADIUS * Math.sqrt(3); // ~36.37px
-    const SHOOTER_X = canvas.width / 2;
-    const SHOOTER_Y = canvas.height - 52;
+    const RADIUS = 21; // 420 / 20
+    const ROW_HEIGHT = 36.37;
+    const SHOOTER_X = 210;
+    const SHOOTER_Y = 578;
     const SWAP_X = 65;
-    const SWAP_Y = canvas.height - 46;
-    const DANGER_LINE_Y = canvas.height - 102;
+    const SWAP_Y = 584;
+    const DANGER_LINE_Y = 528;
 
     const ALL_COLORS = [
         { id: 'red',    light: '#ff7675', main: '#d63031', dark: '#6e0d0e' },
@@ -234,13 +225,15 @@
 
     let audioCtx = null;
     function initAudio() {
-        if (!audioCtx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (AudioContext) audioCtx = new AudioContext();
-        }
-        if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        try {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        } catch (e) {}
     }
 
     function toggleSound() {
@@ -253,78 +246,80 @@
         initAudio();
         if (!audioCtx) return;
 
-        const now = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        try {
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
 
-        if (type === 'shoot') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(280, now);
-            osc.frequency.exponentialRampToValueAtTime(620, now + 0.09);
-            gain.gain.setValueAtTime(0.18, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
-            osc.start(now);
-            osc.stop(now + 0.09);
-        } else if (type === 'pop') {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(420 + pitchOffset * 45, now);
-            osc.frequency.exponentialRampToValueAtTime(880 + pitchOffset * 50, now + 0.11);
-            gain.gain.setValueAtTime(0.22, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.11);
-            osc.start(now);
-            osc.stop(now + 0.11);
-        } else if (type === 'bomb') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(140, now);
-            osc.frequency.exponentialRampToValueAtTime(30, now + 0.45);
-            gain.gain.setValueAtTime(0.35, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
-            osc.start(now);
-            osc.stop(now + 0.45);
-        } else if (type === 'bounce') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(220, now);
-            gain.gain.setValueAtTime(0.12, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-            osc.start(now);
-            osc.stop(now + 0.05);
-        } else if (type === 'swap') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(500, now);
-            osc.frequency.exponentialRampToValueAtTime(350, now + 0.08);
-            gain.gain.setValueAtTime(0.15, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-            osc.start(now);
-            osc.stop(now + 0.08);
-        } else if (type === 'win') {
-            [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-                const o = audioCtx.createOscillator();
-                const g = audioCtx.createGain();
-                o.connect(g);
-                g.connect(audioCtx.destination);
-                o.type = 'triangle';
-                o.frequency.setValueAtTime(freq, now + idx * 0.1);
-                g.gain.setValueAtTime(0.2, now + idx * 0.1);
-                g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
-                o.start(now + idx * 0.1);
-                o.stop(now + idx * 0.1 + 0.25);
-            });
-        } else if (type === 'lose') {
-            [300, 250, 200, 150].forEach((freq, idx) => {
-                const o = audioCtx.createOscillator();
-                const g = audioCtx.createGain();
-                o.connect(g);
-                g.connect(audioCtx.destination);
-                o.type = 'sawtooth';
-                o.frequency.setValueAtTime(freq, now + idx * 0.12);
-                g.gain.setValueAtTime(0.18, now + idx * 0.12);
-                g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.25);
-                o.start(now + idx * 0.12);
-                o.stop(now + idx * 0.12 + 0.25);
-            });
-        }
+            if (type === 'shoot') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(280, now);
+                osc.frequency.exponentialRampToValueAtTime(620, now + 0.09);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+                osc.start(now);
+                osc.stop(now + 0.09);
+            } else if (type === 'pop') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(420 + pitchOffset * 45, now);
+                osc.frequency.exponentialRampToValueAtTime(880 + pitchOffset * 50, now + 0.11);
+                gain.gain.setValueAtTime(0.22, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.11);
+                osc.start(now);
+                osc.stop(now + 0.11);
+            } else if (type === 'bomb') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 0.45);
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            } else if (type === 'bounce') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, now);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'swap') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.exponentialRampToValueAtTime(350, now + 0.08);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'win') {
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'triangle';
+                    o.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    g.gain.setValueAtTime(0.2, now + idx * 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
+                    o.start(now + idx * 0.1);
+                    o.stop(now + idx * 0.1 + 0.25);
+                });
+            } else if (type === 'lose') {
+                [300, 250, 200, 150].forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'sawtooth';
+                    o.frequency.setValueAtTime(freq, now + idx * 0.12);
+                    g.gain.setValueAtTime(0.18, now + idx * 0.12);
+                    g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.25);
+                    o.start(now + idx * 0.12);
+                    o.stop(now + idx * 0.12 + 0.25);
+                });
+            }
+        } catch (e) {}
     }
 
     function getLevelConfig(lvl) {
@@ -368,16 +363,18 @@
         for (let r = 0; r < ROWS; r++) {
             let parity = r % 2;
             rowParity[r] = parity;
-            let colsInRow = parity === 1 ? COLS - 1 : COLS;
-            grid[r] = new Array(colsInRow).fill(null);
+            let colsInRow = (parity === 1) ? (COLS - 1) : COLS;
+            grid[r] = [];
 
-            if (r < config.startRows) {
-                for (let c = 0; c < colsInRow; c++) {
+            for (let c = 0; c < colsInRow; c++) {
+                if (r < config.startRows) {
                     if (c > 0 && Math.random() < 0.35 && grid[r][c - 1]) {
                         grid[r][c] = grid[r][c - 1];
                     } else {
                         grid[r][c] = activeColors[Math.floor(Math.random() * activeColors.length)];
                     }
+                } else {
+                    grid[r][c] = null;
                 }
             }
         }
@@ -387,15 +384,16 @@
     }
 
     function pickSmartColor() {
-        const present = new Set();
+        const present = [];
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < grid[r].length; c++) {
-                if (grid[r][c]) present.add(grid[r][c]);
+                if (grid[r][c] && !present.includes(grid[r][c])) {
+                    present.push(grid[r][c]);
+                }
             }
         }
-        const pool = Array.from(present);
-        if (pool.length === 0) return activeColors[0];
-        return pool[Math.floor(Math.random() * pool.length)];
+        if (present.length === 0) return activeColors[0];
+        return present[Math.floor(Math.random() * present.length)];
     }
 
     function loadNextShot() {
@@ -428,7 +426,7 @@
     function updateHUD() {
         levelDisplay.innerText = currentLevel;
         scoreDisplay.innerText = score;
-        powerBar.style.width = `${Math.min(powerCharge, 100)}%`;
+        powerBar.style.width = Math.min(powerCharge, 100) + '%';
     }
 
     function getTilePos(r, c) {
@@ -439,15 +437,15 @@
     }
 
     function getNeighbors(r, c) {
-        const isIndented = rowParity[r] === 1;
+        const isIndented = (rowParity[r] === 1);
         const offsets = isIndented
             ? [[-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0], [1, 1]]
             : [[-1, -1], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 0]];
 
         const list = [];
-        for (const [dr, dc] of offsets) {
-            const nr = r + dr;
-            const nc = c + dc;
+        for (let i = 0; i < offsets.length; i++) {
+            const nr = r + offsets[i][0];
+            const nc = c + offsets[i][1];
             if (nr >= 0 && nr < ROWS && nc >= 0 && nc < grid[nr].length) {
                 list.push({ r: nr, c: nc });
             }
@@ -529,7 +527,7 @@
     });
 
     function findMatchingCluster(startR, startC, targetColor) {
-        const visited = new Set([`${startR},${startC}`]);
+        const visited = new Set([startR + ',' + startC]);
         const queue = [{ r: startR, c: startC }];
         const cluster = [];
 
@@ -537,8 +535,10 @@
             const curr = queue.shift();
             cluster.push(curr);
 
-            for (const n of getNeighbors(curr.r, curr.c)) {
-                const key = `${n.r},${n.c}`;
+            const neighbors = getNeighbors(curr.r, curr.c);
+            for (let i = 0; i < neighbors.length; i++) {
+                const n = neighbors[i];
+                const key = n.r + ',' + n.c;
                 if (!visited.has(key) && grid[n.r][n.c] && grid[n.r][n.c].id === targetColor.id) {
                     visited.add(key);
                     queue.push(n);
@@ -554,15 +554,17 @@
 
         for (let c = 0; c < grid[0].length; c++) {
             if (grid[0][c]) {
-                connected.add(`0,${c}`);
-                queue.push({ r: 0, c });
+                connected.add('0,' + c);
+                queue.push({ r: 0, c: c });
             }
         }
 
         while (queue.length > 0) {
             const curr = queue.shift();
-            for (const n of getNeighbors(curr.r, curr.c)) {
-                const key = `${n.r},${n.c}`;
+            const neighbors = getNeighbors(curr.r, curr.c);
+            for (let i = 0; i < neighbors.length; i++) {
+                const n = neighbors[i];
+                const key = n.r + ',' + n.c;
                 if (!connected.has(key) && grid[n.r][n.c]) {
                     connected.add(key);
                     queue.push(n);
@@ -573,7 +575,7 @@
         let droppedCount = 0;
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < grid[r].length; c++) {
-                if (grid[r][c] && !connected.has(`${r},${c}`)) {
+                if (grid[r][c] && !connected.has(r + ',' + c)) {
                     const pos = getTilePos(r, c);
                     fallingBubbles.push({
                         x: pos.x,
@@ -617,15 +619,17 @@
             const centerPos = getTilePos(bestR, bestC);
             createExplosion(centerPos.x, centerPos.y, '#ff9f43', 28);
 
-            const toDestroy = new Set([`${bestR},${bestC}`]);
+            const toDestroy = new Set([bestR + ',' + bestC]);
             const ring1 = getNeighbors(bestR, bestC);
             ring1.forEach(n => {
-                toDestroy.add(`${n.r},${n.c}`);
-                getNeighbors(n.r, n.c).forEach(n2 => toDestroy.add(`${n2.r},${n2.c}`));
+                toDestroy.add(n.r + ',' + n.c);
+                getNeighbors(n.r, n.c).forEach(n2 => toDestroy.add(n2.r + ',' + n2.c));
             });
 
             toDestroy.forEach(key => {
-                const [r, c] = key.split(',').map(Number);
+                const parts = key.split(',');
+                const r = Number(parts[0]);
+                const c = Number(parts[1]);
                 if (grid[r] && grid[r][c]) {
                     const p = getTilePos(r, c);
                     createExplosion(p.x, p.y, grid[r][c].main, 6);
@@ -667,8 +671,8 @@
     }
 
     function pushNewTopRow() {
-        const newParity = rowParity[0] === 0 ? 1 : 0;
-        const colsInNewRow = newParity === 1 ? COLS - 1 : COLS;
+        const newParity = (rowParity[0] === 0) ? 1 : 0;
+        const colsInNewRow = (newParity === 1) ? (COLS - 1) : COLS;
         const newRow = [];
 
         for (let c = 0; c < colsInNewRow; c++) {
@@ -683,7 +687,7 @@
     }
 
     function finalizeTurn() {
-        const existing = new Set();
+        const existing = [];
         let totalBubbles = 0;
         let lowestY = 0;
 
@@ -691,7 +695,7 @@
             for (let c = 0; c < grid[r].length; c++) {
                 if (grid[r][c]) {
                     totalBubbles++;
-                    existing.add(grid[r][c]);
+                    if (!existing.includes(grid[r][c])) existing.push(grid[r][c]);
                     const pos = getTilePos(r, c);
                     if (pos.y + RADIUS > lowestY) lowestY = pos.y + RADIUS;
                 }
@@ -706,27 +710,26 @@
             score += levelBonus;
             updateHUD();
             gameState = 'LEVEL_UP';
-            overlayTitle.innerText = `အဆင့် ${currentLevel} အောင်မြင်ပြီ! 🎉`;
-            overlaySub.innerText = `အဆင့်အောင်ဆုကြေး +${levelBonus} မှတ် ရရှိပါသည်`;
-            overlayScore.innerText = `စုစုပေါင်းရမှတ်: ${score}`;
-            actionBtn.innerText = `အဆင့် ${currentLevel + 1} ဆက်ကစားမယ်`;
+            overlayTitle.innerText = 'အဆင့် ' + currentLevel + ' အောင်မြင်ပြီ! 🎉';
+            overlaySub.innerText = 'အဆင့်အောင်ဆုကြေး +' + levelBonus + ' မှတ် ရရှိပါသည်';
+            overlayScore.innerText = 'စုစုပေါင်းရမှတ်: ' + score;
+            actionBtn.innerText = 'အဆင့် ' + (currentLevel + 1) + ' ဆက်ကစားမယ်';
             overlay.classList.remove('hidden');
             return;
         }
 
-        // အနီရောင်မျဉ်းကြောင်း (DANGER_LINE_Y) ကို ထိလျှင် ချက်ချင်းရှုံးမည်
         if (lowestY >= DANGER_LINE_Y) {
             playSound('lose');
             gameState = 'GAME_OVER';
             overlayTitle.innerText = 'စည်းမျဉ်းထိသွားလို့ ရှုံးပါပြီ 😢';
-            overlaySub.innerText = `အဆင့် ${currentLevel} အထိ ရောက်ရှိခဲ့ပါသည်`;
-            overlayScore.innerText = `စုစုပေါင်းရမှတ်: ${score}`;
+            overlaySub.innerText = 'အဆင့် ' + currentLevel + ' အထိ ရောက်ရှိခဲ့ပါသည်';
+            overlayScore.innerText = 'စုစုပေါင်းရမှတ်: ' + score;
             actionBtn.innerText = 'အစမှ ပြန်ကစားမယ်';
             overlay.classList.remove('hidden');
             return;
         }
 
-        if (!existing.has(nextBubble)) {
+        if (!existing.includes(nextBubble)) {
             nextBubble = pickSmartColor();
         }
         loadNextShot();
@@ -816,6 +819,7 @@
     }
 
     function drawBubble(x, y, radius, colorObj) {
+        if (!colorObj) return;
         ctx.save();
         const grad = ctx.createRadialGradient(
             x - radius * 0.32, y - radius * 0.32, radius * 0.08,
@@ -885,7 +889,7 @@
                 if (hit) break;
             }
 
-            const dotColor = shooterBubble.color.id === 'bomb'
+            const dotColor = (shooterBubble.color.id === 'bomb')
                 ? { light: '#ffbe76', main: '#ff7979', dark: '#eb4d4b' }
                 : shooterBubble.color;
 
@@ -919,12 +923,13 @@
         for (let i = 0; i < shotsBeforeDrop; i++) {
             ctx.beginPath();
             ctx.arc(canvas.width - 25 - i * 11, canvas.height - 20, 3.5, 0, Math.PI * 2);
-            ctx.fillStyle = i < remainingShots ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.15)';
+            ctx.fillStyle = (i < remainingShots) ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.15)';
             ctx.fill();
         }
 
         // အပေါ်မှ ရောင်စုံဘောလုံးများ
         for (let r = 0; r < ROWS; r++) {
+            if (!grid[r]) continue;
             for (let c = 0; c < grid[r].length; c++) {
                 if (grid[r][c]) {
                     const pos = getTilePos(r, c);
@@ -934,7 +939,8 @@
         }
 
         // ပြုတ်ကျနေသည့် ဘောလုံးများ
-        for (const fb of fallingBubbles) {
+        for (let i = 0; i < fallingBubbles.length; i++) {
+            const fb = fallingBubbles[i];
             drawBubble(fb.x, fb.y, RADIUS, fb.color);
         }
 
@@ -970,7 +976,8 @@
         }
 
         // ပေါက်ကွဲမှု အမှုန်များ
-        for (const p of particles) {
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
             ctx.save();
             ctx.globalAlpha = p.alpha;
             ctx.beginPath();
@@ -981,7 +988,8 @@
         }
 
         // ရမှတ် Animation
-        for (const ft of floatingTexts) {
+        for (let i = 0; i < floatingTexts.length; i++) {
+            const ft = floatingTexts[i];
             ctx.save();
             ctx.globalAlpha = ft.alpha;
             ctx.font = 'bold 16px sans-serif';
@@ -1000,9 +1008,10 @@
         requestAnimationFrame(loop);
     }
 
-    // စာမျက်နှာပွင့်တာနဲ့ Level 1 ကို ချက်ချင်းစတင်မည်
-    setupLevel(1);
-    loop();
+    window.addEventListener('DOMContentLoaded', () => {
+        setupLevel(1);
+        loop();
+    });
 </script>
 </body>
 </html>
